@@ -78,12 +78,4 @@ class SubscriptionPaymentRepository extends BaseRepository
             'failure_reason'  => $failureReason,
         ]);
     }
-
-    /**
-     * Get paginated payments for a subscription.
-     */
-    public function getPaginatedForSubscription(Subscription $subscription, int $perPage = 10)
-    {
-        return $subscription->payments()->latest()->paginate($perPage);
-    }
 }
