@@ -173,8 +173,8 @@ DELETE /api/v1/subscriptions/{id}?immediately=false  # revoke at period end (def
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/amanyzalat/subscription-engine.git
-cd subscription-engine
+git clone https://github.com/amanyzalat/Subscription.Engine.git
+cd Subscription.Engine
 
 # 2. Install dependencies
 composer install
