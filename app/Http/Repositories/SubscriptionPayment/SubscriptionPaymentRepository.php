@@ -38,7 +38,7 @@ class SubscriptionPaymentRepository extends BaseRepository
      */
     public function referenceExists(string $reference): bool
     {
-        return SubscriptionPayment::where('transaction_id', $reference)
+        return $this->model->where('transaction_id', $reference)
             ->where('status', 'succeeded')
             ->exists();
     }
@@ -46,11 +46,8 @@ class SubscriptionPaymentRepository extends BaseRepository
     /**
      * Record a successful payment row.
      */
-    public function createSucceeded(
-        Subscription $subscription,
-        ?string $paymentReference,
-        Carbon $now
-    ): SubscriptionPayment {
+    public function createSucceeded(Subscription $subscription, ?string $paymentReference, Carbon $now)
+    {
         return $this->model->create([
             'subscription_id'   => $subscription->id,
             'user_id'           => $subscription->user_id,
@@ -65,10 +62,8 @@ class SubscriptionPaymentRepository extends BaseRepository
     /**
      * Record a failed payment row.
      */
-    public function createFailed(
-        Subscription $subscription,
-        ?string $failureReason
-    ): SubscriptionPayment {
+    public function createFailed(Subscription $subscription, ?string $failureReason)
+    {
         return $this->model->create([
             'subscription_id' => $subscription->id,
             'user_id'         => $subscription->user_id,

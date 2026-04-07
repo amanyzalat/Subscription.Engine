@@ -36,7 +36,7 @@ class SubscriptionRepository extends BaseRepository
     /**
      * Update a subscription's attributes.
      */
-    public function updates(Subscription $subscription, array $attributes): Subscription
+    public function updates(Subscription $subscription, array $attributes)
     {
         $subscription->update($attributes);
         return $subscription->refresh();
@@ -44,7 +44,7 @@ class SubscriptionRepository extends BaseRepository
     /**
      * Transition a subscription to canceled.
      */
-    public function cancel(Subscription $subscription, Carbon $now, ?Carbon $endsAt): Subscription
+    public function cancel(Subscription $subscription, Carbon $now, ?Carbon $endsAt)
     {
         return $this->updates($subscription, [
             'status'      => SubscriptionStatus::CANCELED->value,
@@ -55,7 +55,7 @@ class SubscriptionRepository extends BaseRepository
     /**
      * Transition an expired trial subscription to past_due with a grace period.
      */
-    public function expireTrialToPastDue(Subscription $subscription, Carbon $gracePeriodEnd): Subscription
+    public function expireTrialToPastDue(Subscription $subscription, Carbon $gracePeriodEnd)
     {
         return $this->updates($subscription, [
             'status'               => SubscriptionStatus::PAST_DUE->value,
@@ -67,12 +67,12 @@ class SubscriptionRepository extends BaseRepository
      */
     public function getExpiredTrials()
     {
-        return Subscription::expiredTrials()->with('plan')->get();
+        return $this->model->expiredTrials()->with('plan')->get();
     }
     /**
      * Transition an expired trial of a free plan straight to active.
      */
-    public function expireTrialToActive(Subscription $subscription, Carbon $now, Carbon $periodEnd): Subscription
+    public function expireTrialToActive(Subscription $subscription, Carbon $now, Carbon $periodEnd)
     {
         return $this->updates($subscription, [
             'status'               => SubscriptionStatus::ACTIVE->value,
@@ -85,12 +85,12 @@ class SubscriptionRepository extends BaseRepository
      */
     public function getExpiredGracePeriods()
     {
-        return Subscription::expiredGracePeriods()->get();
+        return $this->model->expiredGracePeriods()->get();
     }
     /**
      * Transition a subscription to active status after a successful payment.
      */
-    public function activateAfterPayment(Subscription $subscription, Carbon $now, Carbon $periodEnd): Subscription
+    public function activateAfterPayment(Subscription $subscription, Carbon $now, Carbon $periodEnd)
     {
         return $this->updates($subscription, [
             'status'               => SubscriptionStatus::ACTIVE->value,
