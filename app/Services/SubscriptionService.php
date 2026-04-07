@@ -18,10 +18,7 @@ class SubscriptionService
 {
 
     public const GRACE_PERIOD_DAYS = 3;
-    public function __construct(
-        private readonly SubscriptionRepository $subscriptionRepo,
-        private readonly  SubscriptionPaymentRepository      $paymentRepo,
-    ) {}
+    public function __construct(private readonly SubscriptionRepository $subscriptionRepo, private readonly  SubscriptionPaymentRepository      $paymentRepo,) {}
      // -------------------------------------------------------------------------
     // Subscribing
     // -------------------------------------------------------------------------
@@ -99,10 +96,8 @@ class SubscriptionService
      * Record a successful payment and activate the subscription.
      
      */
-    public function recordSuccessfulPayment(
-        Subscription $subscription,
-        ?string $paymentReference = null
-    ): SubscriptionPayment {
+    public function recordSuccessfulPayment(Subscription $subscription, ?string $paymentReference = null)
+    {
         return DB::transaction(function () use ($subscription, $paymentReference) {
 
             // Guard 1: duplicate payment_reference
@@ -138,10 +133,8 @@ class SubscriptionService
      * Record a failed payment and open a 3-day grace period.
      
      */
-    public function recordFailedPayment(
-        Subscription $subscription,
-        ?string $failureReason = null
-    ): SubscriptionPayment {
+    public function recordFailedPayment(Subscription $subscription, ?string $failureReason = null)
+    {
         return DB::transaction(function () use ($subscription, $failureReason) {
             $payment = $this->paymentRepo->createFailed($subscription, $failureReason);
 
@@ -198,7 +191,9 @@ class SubscriptionService
 
         return $count;
     }
-
+    /**
+     * Expire grace periods of past_due subscriptions whose grace_period_ends_at has passed.
+     */
     public function cancelExpiredGracePeriods(): int
     {
         $count = 0;
