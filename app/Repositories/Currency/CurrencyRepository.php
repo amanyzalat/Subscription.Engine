@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Repositories\Currency;
+namespace App\Repositories\Currency;
 
-use App\Http\Repositories\Base\BaseRepository;
+use App\Repositories\Base\BaseRepository;
 use App\Models\Currency;
 
 class CurrencyRepository extends BaseRepository

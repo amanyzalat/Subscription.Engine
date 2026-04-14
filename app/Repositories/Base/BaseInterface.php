@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Repositories\Base;
+namespace App\Repositories\Base;
 
 interface BaseInterface
 {
@@ -11,6 +11,6 @@ interface BaseInterface
   public function update(array $data, $id);
   public function delete($id);
   public function where(array $conditions);
-  public function setSortParams($request);
+  public function setSortParams($request, string $defaultSort, string $defaultOrder);
   public function with($relations);
 }

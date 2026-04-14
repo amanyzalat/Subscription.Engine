@@ -9,27 +9,23 @@ use App\Models\Subscription;
 use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Repositories\Subscription\SubscriptionRepository;
+use App\Repositories\Subscription\SubscriptionRepository;
 use App\Services\ResponseService;
-use App\Http\Repositories\Plan\PlanRepository;
-use App\Http\Repositories\PlanPrice\PlanPriceRepository;
+use App\Repositories\Plan\PlanRepository;
+use App\Repositories\PlanPrice\PlanPriceRepository;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SubscriptionController extends Controller
 {
     use AuthorizesRequests;
     public function __construct(
+
         private readonly SubscriptionService $subscriptionService,
         protected PlanRepository $planRepo,
         protected PlanPriceRepository $planPriceRepo,
         private ResponseService $responseService,
         protected SubscriptionRepository $subscriptionRepo
-    ) {
-        $this->subscriptionRepo = $subscriptionRepo;
-        $this->responseService = $responseService;
-        $this->planRepo = $planRepo;
-        $this->planPriceRepo = $planPriceRepo;
-    }
+    ) {}
 
     /**
      * GET /api/subscriptions
@@ -50,14 +46,13 @@ class SubscriptionController extends Controller
      */
     public function store(StoreSubscriptionRequest $request)
     {
-        $plan  = $this->planRepo->findOrFail($request->validated('plan_id'));
         $price = $this->planPriceRepo->findOrFail($request->validated('price_id'));
 
-        if (! $plan->is_active) {
+        if (! $price->plan->is_active) {
             return $this->responseService->json('Failed!', [], 401, ['error' => ['This plan is not available.']]);
         }
 
-        $subscription = $this->subscriptionService->subscribe($request->user(), $plan, $price);
+        $subscription = $this->subscriptionService->subscribe($request->user(), $price);
         $subscriptions = new SubscriptionResource($subscription->load(
             'price.plan',
             'price.currency',

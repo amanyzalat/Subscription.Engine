@@ -5,15 +5,14 @@ namespace App\Services;
 use App\Enums\SubscriptionStatus;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Helpers\SubscriptionHelper;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\PlanPrice;
-use App\Http\Repositories\Subscription\SubscriptionRepository;
+use App\Repositories\Subscription\SubscriptionRepository;
 use App\Exceptions\SubscriptionAlreadyActiveException;
 use App\Exceptions\DuplicatePaymentReferenceException;
-use App\Http\Repositories\SubscriptionPayment\SubscriptionPaymentRepository;
+use App\Repositories\SubscriptionPayment\SubscriptionPaymentRepository;
 use App\Events\SubscriptionActivated;
 use App\Events\PaymentFailed;
 use App\Events\SubscriptionCanceled;
@@ -32,15 +31,16 @@ class SubscriptionService
     /**
      * Subscribe a user to a plan with a specific price.
      */
-    public function subscribe(User $user,  PlanPrice $planPrice): Subscription
+    public function subscribe(User $user,  PlanPrice $planPrice)
     {
-        SubscriptionHelper::cancelExistingSubscriptions(
-            $user,
-            fn($s, $immediately) => $this->cancel($s, $immediately)
-        );
+
 
 
         return DB::transaction(function () use ($user, $planPrice) {
+            SubscriptionHelper::cancelExistingSubscriptions(
+                $user,
+                fn($s, $immediately) => $this->cancel($s, $immediately)
+            );
             $now = Carbon::now();
             $plan = $planPrice->plan;
 
@@ -51,10 +51,10 @@ class SubscriptionService
             ];
 
             if ($plan->hasTrialPeriod()) {
-                $attributes['status']        = SubscriptionStatus::TRIALING->value;
+                $attributes['status']        = SubscriptionStatus::TRIALING;
                 $attributes['trial_ends_at'] = $now->copy()->addDays($plan->trial_days);
             } else {
-                $attributes['status']               = SubscriptionStatus::ACTIVE->value;
+                $attributes['status']               = SubscriptionStatus::ACTIVE;
                 $attributes['current_period_start'] = $now;
                 $attributes['current_period_end']   = SubscriptionHelper::nextBillingDate($planPrice, $now);
             }
@@ -153,7 +153,7 @@ class SubscriptionService
             DB::transaction(function () use ($subscription) {
                 $now = Carbon::now();
 
-                if ($subscription->price_cents === 0) {
+                if ($subscription->price->price_cents === 0) {
                     // Free plan → activate directly
                     $periodEnd = SubscriptionHelper::nextBillingDate($subscription->price, $now);
                     $subscription = $this->subscriptionRepo->expireTrialToActive($subscription, $now, $periodEnd);

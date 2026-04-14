@@ -11,7 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-use App\Http\Repositories\SubscriptionPayment\SubscriptionPaymentRepository;
+use App\Repositories\SubscriptionPayment\SubscriptionPaymentRepository;
 use App\Services\ResponseService;
 
 class SubscriptionPaymentController extends Controller
@@ -21,9 +21,7 @@ class SubscriptionPaymentController extends Controller
         private readonly SubscriptionService $subscriptionService,
         protected SubscriptionPaymentRepository $subscriptionPaymentRepo,
         private ResponseService $responseService,
-    ) {
-        $this->subscriptionPaymentRepo = $subscriptionPaymentRepo;
-    }
+    ) {}
 
     /**
      * GET /api/subscriptions/{subscription}/payments
@@ -32,12 +30,12 @@ class SubscriptionPaymentController extends Controller
     {
         $this->authorize('view', $subscription);
 
-        $payments =  $this->subscriptionPaymentRepo->find($subscription->id);
+        $payments =  $this->subscriptionPaymentRepo->getBySubscriptionId($subscription->id);
 
         if (!$payments) {
             return $this->responseService->json('Failed!', [], 401, ['error' => ['Failed to get payments']]);
         }
-        $payments = new PaymentResource($payments);
+        $payments = PaymentResource::collection($payments);
         return $this->responseService->json('Success!', $payments, 200);
     }
 

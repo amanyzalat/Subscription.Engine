@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Repositories\PlanPrice;
+namespace App\Repositories\Plan;
 
-use App\Http\Repositories\Base\BaseRepository;
-use App\Models\PlanPrice;
+use App\Repositories\Base\BaseRepository;
+use App\Models\Plan;
 
-class PlanPriceRepository extends BaseRepository
+class PlanRepository extends BaseRepository
 {
-    public function __construct(PlanPrice $model)
+    public function __construct(Plan $model)
     {
         parent::__construct($model);
     }
@@ -23,8 +23,7 @@ class PlanPriceRepository extends BaseRepository
                 $query->where('name', 'LIKE', '%' . $request->name . '%');
             }
         });
-        // $models->withCount(['subscriptions']);
-        $models->with(['currency', 'plan', 'billingCycle']);
+
         $models->orderBy($sort, $order);
         // default per_page = 10
         $perPage = $request->input('per_page', 10);
@@ -32,14 +31,13 @@ class PlanPriceRepository extends BaseRepository
         $models = $models->paginate($perPage);
         return ['status' => true, 'data' => $models];
     }
-    public function create(array $data)
+    public function subscriptions($id)
     {
-        if (isset($data['price'])) {
-            $data['price_cents'] = (int) round($data['price'] * 100);
-        }
-
-        $model = parent::create($data);
-        return $model->load(['plan', 'currency', 'billingCycle']);
+        return $this->model->find($id)->subscriptions();
+    }
+    public function prices($id)
+    {
+        return $this->model->find($id)->prices();
     }
     public function delete($id)
     {
@@ -53,5 +51,13 @@ class PlanPriceRepository extends BaseRepository
         $model->prices()->delete();
         $model->delete();
         return ['status' => true];
+    }
+    public function activePlansWithPrices($id)
+    {
+        $models = $this->model->where('is_active', true)->with([
+            'prices.currency',
+            'prices.billingCycle',
+        ])->findOrFail($id);
+        return ['status' => true, 'data' => $models];
     }
 }

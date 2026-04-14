@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\ResponseService;
 use App\Http\Requests\Billing\StoreBillingRequest;
 use App\Http\Resources\Billing\BillingResource;
-use App\Http\Repositories\Billing\BillingRepository;
+use App\Repositories\Billing\BillingRepository;
 
 
 class BillingCycleController extends Controller

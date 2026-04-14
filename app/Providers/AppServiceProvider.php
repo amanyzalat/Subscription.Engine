@@ -6,8 +6,8 @@ use App\Models\Subscription;
 use App\Policies\SubscriptionPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use App\Http\Repositories\Base\BaseInterface;
-use App\Http\Repositories\Base\BaseRepository;
+use App\Repositories\Base\BaseInterface;
+use App\Repositories\Base\BaseRepository;
 
 
 class AppServiceProvider extends ServiceProvider

@@ -7,7 +7,7 @@ use App\Http\Requests\Plan\StorePlanRequest;
 use App\Http\Requests\Plan\UpdatePlanRequest;
 use App\Http\Resources\Plan\PlanResource;
 use Illuminate\Http\Request;
-use App\Http\Repositories\Plan\PlanRepository;
+use App\Repositories\Plan\PlanRepository;
 use App\Http\Resources\Plan\PlanPricesResource;
 use App\Services\ResponseService;
 

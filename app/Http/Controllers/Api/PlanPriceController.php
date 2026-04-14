@@ -7,7 +7,7 @@ use App\Http\Requests\PlanPrice\StorePlanPriceRequest;
 use App\Http\Requests\PlanPrice\UpdatePlanPriceRequest;
 use App\Http\Resources\PlanPrice\PlanPriceResource;
 use Illuminate\Http\Request;
-use App\Http\Repositories\PlanPrice\PlanPriceRepository;
+use App\Repositories\PlanPrice\PlanPriceRepository;
 use App\Services\ResponseService;
 
 class PlanPriceController extends Controller

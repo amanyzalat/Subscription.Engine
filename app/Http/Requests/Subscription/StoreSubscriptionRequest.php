@@ -19,18 +19,10 @@ class StoreSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'plan_id'  => ['required', Rule::exists('plans', 'id')->where('is_active', true)->whereNull('deleted_at')],
             'price_id' => [
                 'required',
                 'integer',
                 Rule::exists('plan_prices', 'id')->whereNull('deleted_at'),
-                // Ensure the price belongs to the chosen plan
-                function ($attribute, $value, $fail) {
-                    $planId = $this->input('plan_id');
-                    if ($planId && !PlanPrice::where('id', $value)->where('plan_id', $planId)->exists()) {
-                        $fail('The selected price does not belong to the chosen plan.');
-                    }
-                },
             ],
         ];
     }

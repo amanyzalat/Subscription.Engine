@@ -1,17 +1,12 @@
 <?php
 
-namespace App\Http\Repositories\Subscription;
+namespace App\Repositories\Subscription;
 
-use App\Http\Repositories\Base\BaseRepository;
+use App\Repositories\Base\BaseRepository;
 use App\Models\Subscription;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use App\Enums\SubscriptionStatus;
-use App\Helpers\SubscriptionHelper;
-use App\Models\Plan;
-use App\Models\PlanPrice;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+
 
 class SubscriptionRepository extends BaseRepository
 {
@@ -47,7 +42,7 @@ class SubscriptionRepository extends BaseRepository
     public function cancel(Subscription $subscription, Carbon $now, ?Carbon $endsAt)
     {
         return $this->updates($subscription, [
-            'status'      => SubscriptionStatus::CANCELED->value,
+            'status'      => SubscriptionStatus::CANCELED,
             'canceled_at' => $now,
             'ends_at'     => $endsAt ?? $now,
         ]);
@@ -58,7 +53,7 @@ class SubscriptionRepository extends BaseRepository
     public function expireTrialToPastDue(Subscription $subscription, Carbon $gracePeriodEnd)
     {
         return $this->updates($subscription, [
-            'status'               => SubscriptionStatus::PAST_DUE->value,
+            'status'               => SubscriptionStatus::PAST_DUE,
             'grace_period_ends_at' => $gracePeriodEnd,
         ]);
     }
@@ -75,7 +70,7 @@ class SubscriptionRepository extends BaseRepository
     public function expireTrialToActive(Subscription $subscription, Carbon $now, Carbon $periodEnd)
     {
         return $this->updates($subscription, [
-            'status'               => SubscriptionStatus::ACTIVE->value,
+            'status'               => SubscriptionStatus::ACTIVE,
             'current_period_start' => $now,
             'current_period_end'   => $periodEnd,
         ]);
@@ -93,7 +88,7 @@ class SubscriptionRepository extends BaseRepository
     public function activateAfterPayment(Subscription $subscription, Carbon $now, Carbon $periodEnd)
     {
         return $this->updates($subscription, [
-            'status'               => SubscriptionStatus::ACTIVE->value,
+            'status'               => SubscriptionStatus::ACTIVE,
             'grace_period_ends_at' => null,
             'current_period_start' => $now,
             'current_period_end'   => $periodEnd,
@@ -105,7 +100,7 @@ class SubscriptionRepository extends BaseRepository
     public function markAsPastDue(Subscription $subscription, Carbon $gracePeriodEnd): Subscription
     {
         return $this->updates($subscription, [
-            'status'               => SubscriptionStatus::PAST_DUE->value,
+            'status'               => SubscriptionStatus::PAST_DUE,
             'grace_period_ends_at' => $gracePeriodEnd,
         ]);
     }

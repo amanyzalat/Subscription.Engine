@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Repositories\Billing;
+namespace App\Repositories\Billing;
 
-use App\Http\Repositories\Base\BaseRepository;
+use App\Repositories\Base\BaseRepository;
 use App\Models\BillingCycle;
 
 class BillingRepository extends BaseRepository

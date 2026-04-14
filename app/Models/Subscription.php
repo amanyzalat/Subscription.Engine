@@ -67,22 +67,22 @@ class Subscription extends Model
 
     public function isTrialing(): bool
     {
-        return $this->status === SubscriptionStatus::TRIALING->value;
+        return $this->status === SubscriptionStatus::TRIALING;
     }
 
     public function isActive(): bool
     {
-        return $this->status === SubscriptionStatus::ACTIVE->value;
+        return $this->status === SubscriptionStatus::ACTIVE;
     }
 
     public function isPastDue(): bool
     {
-        return $this->status === SubscriptionStatus::PAST_DUE->value;
+        return $this->status === SubscriptionStatus::PAST_DUE;
     }
 
     public function isCanceled(): bool
     {
-        return $this->status === SubscriptionStatus::CANCELED->value;
+        return $this->status === SubscriptionStatus::CANCELED;
     }
     /**
      * User should still have access during trial, active, or grace period.
@@ -112,7 +112,7 @@ class Subscription extends Model
 
     public function onGracePeriod(): bool
     {
-        return $this->isCanceled()
+        return $this->isPastDue()
             && $this->grace_period_ends_at?->isFuture();
     }
 

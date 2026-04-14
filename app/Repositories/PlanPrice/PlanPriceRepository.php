@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Repositories\Plan;
+namespace App\Repositories\PlanPrice;
 
-use App\Http\Repositories\Base\BaseRepository;
-use App\Models\Plan;
+use App\Repositories\Base\BaseRepository;
+use App\Models\PlanPrice;
 
-class PlanRepository extends BaseRepository
+class PlanPriceRepository extends BaseRepository
 {
-    public function __construct(Plan $model)
+    public function __construct(PlanPrice $model)
     {
         parent::__construct($model);
     }
@@ -23,7 +23,8 @@ class PlanRepository extends BaseRepository
                 $query->where('name', 'LIKE', '%' . $request->name . '%');
             }
         });
-
+        // $models->withCount(['subscriptions']);
+        $models->with(['currency', 'plan', 'billingCycle']);
         $models->orderBy($sort, $order);
         // default per_page = 10
         $perPage = $request->input('per_page', 10);
@@ -31,13 +32,14 @@ class PlanRepository extends BaseRepository
         $models = $models->paginate($perPage);
         return ['status' => true, 'data' => $models];
     }
-    public function subscriptions($id)
+    public function create(array $data)
     {
-        return $this->model->find($id)->subscriptions();
-    }
-    public function prices($id)
-    {
-        return $this->model->find($id)->prices();
+        if (isset($data['price'])) {
+            $data['price_cents'] = (int) round($data['price'] * 100);
+        }
+
+        $model = parent::create($data);
+        return $model->load(['plan', 'currency', 'billingCycle']);
     }
     public function delete($id)
     {
@@ -51,13 +53,5 @@ class PlanRepository extends BaseRepository
         $model->prices()->delete();
         $model->delete();
         return ['status' => true];
-    }
-    public function activePlansWithPrices($id)
-    {
-        $models = $this->model->where('is_active', true)->with([
-            'prices.currency',
-            'prices.billingCycle',
-        ])->findOrFail($id);
-        return ['status' => true, 'data' => $models];
     }
 }

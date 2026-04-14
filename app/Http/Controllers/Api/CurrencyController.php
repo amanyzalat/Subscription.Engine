@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Repositories\Currency\CurrencyRepository;
+use App\Repositories\Currency\CurrencyRepository;
 use App\Http\Requests\Currency\StoreCurrencyRequest;
 use App\Services\ResponseService;
 use App\Http\Resources\Currency\CurrencyResource;

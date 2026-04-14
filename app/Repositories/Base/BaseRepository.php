@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Repositories\Base;
+namespace App\Repositories\Base;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Http\Repositories\Base\BaseInterface;
+use App\Repositories\Base\BaseInterface;
 
 class BaseRepository implements BaseInterface
 {
@@ -40,21 +40,12 @@ class BaseRepository implements BaseInterface
         return $this->model->with($relations);
     }
     // sort
-    public function setSortParams($request)
+    public function setSortParams($request, string $defaultSort = 'created_at', string $defaultOrder = 'desc')
     {
-        switch ($request->sort) {
-            default:
-                $sort = $request->sort ?: 'created_at';
-                break;
-        }
-
-        switch ($request->order) {
-            default:
-                $order = $request->order ?: 'desc';
-                break;
-        }
-
-        return [$sort, $order];
+        return [
+            $request->input('sort', $defaultSort),
+            $request->input('order', $defaultOrder),
+        ];
     }
     public function update(array $data, $id)
     {
