@@ -116,7 +116,7 @@ Authorization: Bearer <token>
 {
   "name": "Pro Monthly",
   "description": "Full-featured monthly plan",
-  "tratrial_days": 7
+  "trial_days": 7
 }
 ```
 
