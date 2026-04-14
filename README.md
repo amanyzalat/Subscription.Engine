@@ -17,7 +17,7 @@ All business logic lives in `App\Services\SubscriptionService`. Controllers are 
 - Readable `match()` expressions in the service
 
 ### 3. Repository Pattern
-DB access only in `App\Repositories\SubscriptionRepository`. Controllers are intentionally thin — they validate input, delegate to the service, and format responses. This keeps the domain logic testable in isolation and reusable.
+DB access only in `App\Http\Repositories\SubscriptionRepository`. Controllers are intentionally thin — they validate input, delegate to the service, and format responses. This keeps the domain logic testable in isolation and reusable.
 
 ### 4. Price Storage in Cents
 All monetary values are stored as **unsigned integers in the smallest currency unit** (cents / fils / piastres). This eliminates floating-point rounding bugs — a common source of billing bugs in production. The `Plan::getPriceAttribute()` accessor converts to a decimal for API responses.
