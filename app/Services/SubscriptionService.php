@@ -11,14 +11,20 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\PlanPrice;
 use App\Http\Repositories\Subscription\SubscriptionRepository;
-use App\Models\SubscriptionPayment;
+use App\Exceptions\SubscriptionAlreadyActiveException;
+use App\Exceptions\DuplicatePaymentReferenceException;
 use App\Http\Repositories\SubscriptionPayment\SubscriptionPaymentRepository;
+use App\Events\SubscriptionActivated;
+use App\Events\PaymentFailed;
+use App\Events\SubscriptionCanceled;
+use App\Events\SubscriptionPastDue;
+use App\Events\SubscriptionCreated;
 
 class SubscriptionService
 {
 
     public const GRACE_PERIOD_DAYS = 3;
-    public function __construct(private readonly SubscriptionRepository $subscriptionRepo, private readonly  SubscriptionPaymentRepository      $paymentRepo,) {}
+    public function __construct(private readonly SubscriptionRepository $subscriptionRepo, private readonly  SubscriptionPaymentRepository      $paymentRepo) {}
      // -------------------------------------------------------------------------
     // Subscribing
     // -------------------------------------------------------------------------
@@ -53,15 +59,7 @@ class SubscriptionService
                 $attributes['current_period_end']   = SubscriptionHelper::nextBillingDate($planPrice, $now);
             }
             $subscription = $this->subscriptionRepo->create($attributes);
-
-            Log::info('Subscription created', [
-                'user_id'         => $user->id,
-                'plan_id'         => $plan->id,
-                'price_id'        => $planPrice->id,
-                'status'          => $subscription->status,
-                'subscription_id' => $subscription->id,
-            ]);
-
+            event(new SubscriptionCreated($subscription));
             return $subscription;
         });
     }
@@ -80,11 +78,8 @@ class SubscriptionService
 
         $subscription = $this->subscriptionRepo->cancel($subscription, $now, $endsAt);
 
+        event(new SubscriptionCanceled($subscription, $immediately));
 
-        Log::info('Subscription canceled', [
-            'subscription_id' => $subscription->id,
-            'immediately'     => $immediately,
-        ]);
 
         return $subscription->refresh();
     }
@@ -102,29 +97,21 @@ class SubscriptionService
 
             // Guard 1: duplicate payment_reference
             if ($paymentReference && $this->paymentRepo->referenceExists($paymentReference)) {
-                throw new \RuntimeException(
-                    "Payment reference [{$paymentReference}] already recorded."
-                );
+                throw new DuplicatePaymentReferenceException();
             }
 
             // Guard 2: subscription already active
             if ($subscription->isActive()) {
-                throw new \RuntimeException(
-                    'Subscription is already active, no payment needed.'
-                );
+                throw new SubscriptionAlreadyActiveException();
             }
 
             $now      = Carbon::now();
             $payment  = $this->paymentRepo->createSucceeded($subscription, $paymentReference, $now);
             $periodEnd = SubscriptionHelper::nextBillingDate($subscription->price, $now);
 
-            $this->subscriptionRepo->activateAfterPayment($subscription, $now, $periodEnd);
+            $updatedSubscription = $this->subscriptionRepo->activateAfterPayment($subscription, $now, $periodEnd);
 
-            Log::info('Payment succeeded – subscription activated', [
-                'subscription_id' => $subscription->id,
-                'payment_id'      => $payment->id,
-            ]);
-
+            event(new SubscriptionActivated($updatedSubscription, $payment));
             return $payment;
         });
     }
@@ -141,12 +128,8 @@ class SubscriptionService
             if (! $subscription->isCanceled()) {
                 $gracePeriodEnd = Carbon::now()->addDays(self::GRACE_PERIOD_DAYS);
 
-                $this->subscriptionRepo->markAsPastDue($subscription, $gracePeriodEnd);
-
-                Log::warning('Payment failed – grace period opened', [
-                    'subscription_id'      => $subscription->id,
-                    'grace_period_ends_at' => $gracePeriodEnd,
-                ]);
+                $subscription = $this->subscriptionRepo->markAsPastDue($subscription, $gracePeriodEnd);
+                event(new PaymentFailed($subscription));
             }
 
             return $payment;
@@ -173,20 +156,17 @@ class SubscriptionService
                 if ($subscription->price_cents === 0) {
                     // Free plan → activate directly
                     $periodEnd = SubscriptionHelper::nextBillingDate($subscription->price, $now);
-                    $this->subscriptionRepo->expireTrialToActive($subscription, $now, $periodEnd);
+                    $subscription = $this->subscriptionRepo->expireTrialToActive($subscription, $now, $periodEnd);
+                    event(new SubscriptionActivated($subscription->fresh()));
                 } else {
                     // Paid plan → past_due, await first payment
                     $gracePeriodEnd = $now->copy()->addDays(self::GRACE_PERIOD_DAYS);
-                    $this->subscriptionRepo->expireTrialToPastDue($subscription, $gracePeriodEnd);
+                    $subscription = $this->subscriptionRepo->expireTrialToPastDue($subscription, $gracePeriodEnd);
+                    event(new SubscriptionPastDue($subscription->fresh(), $gracePeriodEnd));
                 }
             });
 
             $count++;
-
-            Log::info('Trial expired', [
-                'subscription_id' => $subscription->id,
-                'new_status'      => $subscription->fresh()->status,
-            ]);
         }
 
         return $count;
@@ -197,16 +177,13 @@ class SubscriptionService
     public function cancelExpiredGracePeriods(): int
     {
         $count = 0;
-
+        $now = Carbon::now();
         foreach ($this->subscriptionRepo->getExpiredGracePeriods() as $subscription) {
-            $now = Carbon::now();
-            $this->subscriptionRepo->cancel($subscription, $now, $now);
+
+            $subscription = $this->subscriptionRepo->cancel($subscription, $now, $now);
 
             $count++;
-
-            Log::warning('Subscription auto-canceled after grace period', [
-                'subscription_id' => $subscription->id,
-            ]);
+            event(new SubscriptionCanceled($subscription));
         }
 
         return $count;
